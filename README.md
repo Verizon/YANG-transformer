@@ -3,7 +3,7 @@ jtransformer JSON to OpenConfig YANG JSON Transformer
 
 This directory contains the Java spring-boot json to OpenConfig json transformer.   This software is used to help onboard equipent that is not yet fully OpenConfig compliant.   Using this software enables companies that want to talk OpenConfig Json to be able to utilize these equipment without having to change their code as no devices are added.
 
-The jtransformer does require the yang-validator to be running for access to data mappings.   yang-validator can be found here: https://git.ouroath.com/rtorres02/yang-validator.   When running jtransformer, first start the yang-validator following its intructions.    Then follow the jtransformer instructions below.   There are sample test scripts below as well.    Also added is a swagger UI for testing the validator.    Should the yang-validator need to be started on a separate port, you can inform jtransformer of this port and ip location in pyang.properties.
+The jtransformer does require the yang-validator to be running for access to data mappings.   yang-validator can be found here: https://github.com/Verizon/YANG-transformer.   When running jtransformer, first start the yang-validator following its intructions.    Then follow the jtransformer instructions below.   There are sample test scripts below as well.    Also added is a swagger UI for testing the validator.    Should the yang-validator need to be started on a separate port, you can inform jtransformer of this port and ip location in pyang.properties.
 
 
 Build
