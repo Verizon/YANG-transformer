@@ -1,7 +1,3 @@
-/*
-Copyright Verizon Inc. 
-Licensed under the terms of the Apache License 2.0 license.  See LICENSE file in project root for terms.
-*/
 package com.vzw.yang.test;
 
 import java.io.BufferedReader;
@@ -17,6 +13,9 @@ import java.util.Optional;
 import com.vzw.yang.services.TransactionStatus;
 import com.vzw.yang.services.TransformerDisplayCount;
 import com.vzw.yang.services.TransformerStressTester;
+
+//import org.opendaylight.yangtools.yang.model.api.SchemaContext;
+//import org.opendaylight.yangtools.yang.parser.repo.YangTextSchemaContextResolver;
 
 public class Test {
 	

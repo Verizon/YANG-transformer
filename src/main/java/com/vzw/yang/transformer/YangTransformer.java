@@ -1,13 +1,11 @@
-/*
-Copyright Verizon Inc. 
-Licensed under the terms of the Apache License 2.0 license.  See LICENSE file in project root for terms.
-*/
 package com.vzw.yang.transformer;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.LineNumberReader;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -242,19 +240,22 @@ public class YangTransformer {
     			error = "Unable to convert entered json string: " + e.getMessage();
     			break;
     		}
-    		
+    		JSONObject rootJson = jsonObj;
     		// Check for basetransformer processing required
     		if (mapper.has("basetransformer")) {
     			// Perform base mapping logic here
     			String baseTransformer = mapper.getString("basetransformer");
     			jsonObj = transformBaseJson(jsonObj, baseTransformer);
     		}
-    		JSONObject rootJson = jsonObj;
+    		
     		
     		JSONObject yangObj = new JSONObject();
     		resultYangObj.put(mapper.getString("rootNode"), yangObj);
     		
-    		convertToYangJsonWithMapping(mapper, yangObj, jsonObj, rootJson);
+    		if (hasDict(mapper))
+    		   convertToYangJsonWithMapping(mapper, yangObj, jsonObj, rootJson);
+    		else
+    			resultYangObj.put(mapper.getString("rootNode"), jsonObj);
     		    		
     		if (validate) {
     			yangJsonStr = resultYangObj.toString();
@@ -278,55 +279,39 @@ public class YangTransformer {
     	return resultYangObj;
     }
     
-    private JSONObject transformBaseJson(JSONObject jsonObj, String baseTransformer) {
-    	JSONObject retObj = jsonObj;
-    	
-    	logger.info("YangTransformer.transformBaseJson: Entered");
-    	do {
-    		if ("TransformJuniperAlarm.TransformJuniperAlarm.transform".equals(baseTransformer)) {
-    			retObj = new JSONObject();
-    			Iterator<String> keys = jsonObj.keys();
-    			while (keys.hasNext()) {
-    				String key = keys.next();
-    				if (!"kv".equals(key)) {
-    					Object obj = jsonObj.get(key);
-    					if (obj instanceof String) {
-    						retObj.put(key, (String)obj);
-    					} else if (obj instanceof Long) {
-    						retObj.put(key, ((Long)obj).toString());
-      					} else if (obj instanceof Integer) {
-    						retObj.put(key, ((Integer)obj).toString());
-      					} else if (obj instanceof Float) {
-    						retObj.put(key, ((Float)obj).toString());
-      					} else if (obj instanceof Double) {
-    						retObj.put(key, ((Double)obj).toString());
-    					} else {
-    						retObj.put(key, obj.toString());
-    					}
-    				} else {
-    					JSONArray kvlist = jsonObj.getJSONArray(key);
-    					for (int i = 0; i < kvlist.length(); i++) {
-    						JSONObject jo = kvlist.getJSONObject(i);
-    						if (jo.has("uintValue")) {
-    							retObj.put(jo.getString("key"), jo.getString("uintValue"));
-    						}
-    						if (jo.has("strValue")) {
-    							retObj.put(jo.getString("key"), jo.getString("strValue"));
-    						}
-    					}
-    				}
-    			}
-    			JSONObject j = new JSONObject();
-    			j.put("data", retObj);
-    			retObj = new JSONObject();
-    			retObj.put("data", j);
-    		}
-    	} while(false);
-    	logger.info("YangTransformer.transformBaseJson: Exited");
+	private boolean hasDict(JSONObject mapper) {
+		boolean hasDict = false;
+		Iterator<String> keys = (Iterator<String>) mapper.keys();
+		while (keys.hasNext()) {
+			String key = keys.next();
 
-    	
-    	return retObj;
-    }
+			Object mObj = mapper.get(key);
+			if (mObj instanceof JSONObject) {
+				hasDict = true;
+			}
+		}
+
+		return hasDict;
+	}
+	private JSONObject transformBaseJson(JSONObject jsonObj, String baseTransformer) {
+		logger.info("YangTransformer.transformBaseJson: Entered");
+
+		JSONObject retObj = jsonObj;
+		String[] moduleClassMethod = baseTransformer.split("\\.");
+		try {
+			Class<?> klas = Class.forName("com.vzw.yang.transformer." + moduleClassMethod[1]);
+
+			Method method = klas.getDeclaredMethod(moduleClassMethod[2], JSONObject.class);
+			retObj = (JSONObject) method.invoke(null, jsonObj);
+		} catch (ClassNotFoundException | NoSuchMethodException | SecurityException | IllegalAccessException
+				| IllegalArgumentException | InvocationTargetException e) {
+			e.printStackTrace();
+			return (retObj);
+		}
+        logger.info(retObj.toString());
+		logger.info("YangTransformer.transformBaseJson: Exited");
+		return retObj;
+	}
     
     private void convertToYangJsonWithMapping(JSONObject mapper, JSONObject yangObj, JSONObject jsonObj, JSONObject rootJson) throws Exception {
     	String error = null;
@@ -386,6 +371,7 @@ public class YangTransformer {
     				yangObj.put(key, newObj);
     				
     				JSONObject saveRootObj = rootJson;
+
     				convertToYangJsonWithMapping(groupMObj, newObj, groupJsonObj, rootJson);
     				rootJson = saveRootObj;
     				
@@ -425,7 +411,7 @@ public class YangTransformer {
     private String getJsonStringValue(JSONObject jsonObj, String tag, JSONObject mObj, JSONObject rootJson) {
     	String retValue = null;
     	JSONObject currentObj = jsonObj;
-    	
+
     	try {
     		String[] tags = tag.split("->");
     		for (String t : tags) {
@@ -590,6 +576,7 @@ public class YangTransformer {
 
     private JSONObject getJsonListValue(JSONObject jsonObj, String tag, JSONObject mObj, JSONObject rootJson) {
     	Object currentObj = jsonObj;
+    	
     	JSONObject yangObject = new JSONObject();
     	
     	try {
@@ -618,7 +605,7 @@ public class YangTransformer {
     	}
     	
     	if (!(currentObj instanceof JSONArray)) {
-    		return getJsonObjectValue(jsonObj, (JSONObject)currentObj, rootJson);
+    		return getJsonObjectValue((JSONObject)currentObj, mObj, rootJson);
     	}
     	
     	JSONArray jArray = (JSONArray)currentObj;
@@ -676,21 +663,24 @@ public class YangTransformer {
     private JSONObject getJsonObjectValue(JSONObject jsonObj, JSONObject mObj, JSONObject rootJson) {
     	JSONObject yangObject = new JSONObject();
    		JSONObject item = new JSONObject();
+   		
 
 		String keyTag = mObj.getJSONObject("keys").getJSONObject(mObj.getString("key")).getString("tag");
-		String value = getJsonStringValue(mObj, keyTag, mObj.getJSONObject("keys").getJSONObject(mObj.getString("key")), rootJson);
+
+		String value = getJsonStringValue(jsonObj, keyTag, mObj.getJSONObject("keys").getJSONObject(mObj.getString("key")), rootJson);
 		yangObject.put(value, item);
 
-		Iterator<String> keys = mObj.keys();
+		
+		Iterator<String> keys = mObj.getJSONObject("keys").keys();
 		while (keys.hasNext()) {
 			String key = keys.next();
-			JSONObject mo = mObj.getJSONObject(key);
+			JSONObject mo = mObj.getJSONObject("keys").getJSONObject(key);
 			if (mo.getString("type").equals("string")) {
 				String result = getJsonStringValue(jsonObj, mo.getString("tag"), mo, rootJson);
 				if (result != null) {
 					item.put(key, result);
 				}
-			} else if (mObj.getString("type").equals("string-list")) {
+			} else if (mo.getString("type").equals("string-list")) {
 				String result = getJsonStringValue(jsonObj, mObj.getString("tag"), mObj, rootJson);
 				JSONArray ja = new JSONArray();
 				item.put(key, ja);
@@ -698,12 +688,12 @@ public class YangTransformer {
 				for (String str : stringList) {
 					ja.put(str);
 				}			
-			} else if (mObj.getString("type").equals("int")) {
+			} else if (mo.getString("type").equals("int")) {
 				Integer result = getJsonIntValue(jsonObj, mObj.getString("tag"), mObj, rootJson);
 				if (result != null) {
 					item.put(key, result);
 				}
-			} else if (mObj.getString("type").equals("grouping")) {
+			} else if (mo.getString("type").equals("grouping")) {
 				JSONObject groupJsonObj = getJsonObject(jsonObj, mo.getString("tag"));
 				JSONObject groupMObj = mo.getJSONObject("grouping");
 				JSONObject newObj = new JSONObject();

@@ -1,7 +1,3 @@
-/*
-Copyright Verizon Inc. 
-Licensed under the terms of the Apache License 2.0 license.  See LICENSE file in project root for terms.
-*/
 package com.vzw.yang.util;
 
 import java.io.BufferedInputStream;
@@ -16,6 +12,8 @@ import org.apache.logging.log4j.Logger;
 public class InvokePyangScript {
 	private static final Logger logger = LogManager.getLogger(InvokePyangScript.class);
 
+	//private String pythonExecutable = "/Users/torrera/anaconda3/bin/python";
+	//private String pythonWorkingDirectory = "/Users/torrera/git/yang/poc/project/python/transformer";
 	private String pythonExecutable = "/usr/bin/python3";
 	private String pythonWorkingDirectory = "/transformer";
 	

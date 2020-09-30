@@ -1,7 +1,3 @@
-/*
-Copyright Verizon Inc. 
-Licensed under the terms of the Apache License 2.0 license.  See LICENSE file in project root for terms.
-*/
 package com.vzw.yang.rest;
 
 import org.apache.logging.log4j.LogManager;
@@ -10,6 +6,7 @@ import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -39,6 +36,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/yangApiService")
+@CrossOrigin(origins = {"http://localhost:4200", "http://localhost:8080"})
 public class YangApiService {
     private Logger logger = LogManager.getLogger(YangApiService.class);
     

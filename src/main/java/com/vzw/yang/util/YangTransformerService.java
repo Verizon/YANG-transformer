@@ -1,7 +1,3 @@
-/*
-Copyright Verizon Inc. 
-Licensed under the terms of the Apache License 2.0 license.  See LICENSE file in project root for terms.
-*/
 package com.vzw.yang.util;
 
 import java.util.ArrayList;
@@ -24,6 +20,9 @@ import org.springframework.web.client.RestTemplate;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vzw.yang.data.JsonToYangJsonRequest;
 
+/**********************************************************************
+ ** Process responses from CAMEO
+ **********************************************************************/
 @Service("yangTransformerService")
 @PropertySource("classpath:pyang.properties")
 public class YangTransformerService {
