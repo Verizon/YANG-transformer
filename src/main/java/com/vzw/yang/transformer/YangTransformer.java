@@ -74,6 +74,16 @@ public class YangTransformer {
 
     }
     
+    public synchronized void reloadMappings() {
+        logger.info("reloadMappings: Entered");
+        
+        mappingDetails.clear();
+        loadMappings();
+        
+        logger.info("reloadMappings: Exited");
+
+    }
+    
     public JSONObject jsonToYangJson(String topic, String jsonStr, boolean validate) throws Exception {
     	JSONObject yangJson = null;
     	String error = null;

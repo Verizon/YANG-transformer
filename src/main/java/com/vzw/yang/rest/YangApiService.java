@@ -129,8 +129,7 @@ public class YangApiService {
     	
         logger.info("YangApiService.getMappingDetails: Entered:");
 
-        try {
-				
+        try {        	
 			mappings = transService.getMappingDetails();
 	    	prettyPrintJson(mappings);
 
@@ -143,6 +142,30 @@ public class YangApiService {
         return mappings;
 
     }
+    
+    @GetMapping(value = "reloadMappings")
+    public String reloadMappings() {
+       
+    	String mappings = "";
+    	
+        logger.info("YangApiService.reloadMappings: Entered:");
+
+        try {
+        	transformer.reloadMappings();
+        	
+			mappings = transService.getMappingDetails();
+	    	prettyPrintJson(mappings);
+
+        } catch(Exception e) {
+        	e.printStackTrace();
+        	return getModelMapError(e.getMessage());
+        }
+        logger.info("YangApiService.reloadMappings: Exited");
+        
+        return mappings;
+
+    }
+
     
     private void prettyPrintJson(String jsonStr) {
     	try {
