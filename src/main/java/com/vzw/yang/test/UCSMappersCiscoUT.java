@@ -1,3 +1,7 @@
+/*
+Copyright Verizon Inc. 
+Licensed under the terms of the Apache License 2.0 license.  See LICENSE file in project root for terms.
+*/
 package com.vzw.yang.test;
 
 import static org.junit.Assert.*;
