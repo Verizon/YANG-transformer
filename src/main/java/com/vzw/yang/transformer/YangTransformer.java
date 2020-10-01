@@ -27,7 +27,9 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.vzw.yang.data.JsonToYangJsonRequest;
 import com.vzw.yang.util.YangTransformerService;
 
@@ -95,8 +97,28 @@ public class YangTransformer {
     		// load the mapping details
     		//loadMappingDetails(md);
     		
-    		yangJson = convertToYangJson(md, jsonStr, validate);
+    		//yangJson = convertToYangJson(md, jsonStr, validate);
+    		ObjectMapper mapper = new ObjectMapper();
+    		JsonNode jnMapperObject = mapper.readTree(md.getMappingObj().toString());
+    		com.vzw.yang.transformer.ucs.MappingDetail ucsMappingDetail = new com.vzw.yang.transformer.ucs.MappingDetail(topic, jnMapperObject);
+    		JsonNode inputJson = mapper.readTree(jsonStr);
+    		com.vzw.yang.transformer.ucs.YangTransformer ucsTransformer =
+    				new com.vzw.yang.transformer.ucs.YangTransformer();
+    		String yangJsonStr = ucsTransformer.convertToYangJson(ucsMappingDetail, (ObjectNode)inputJson, validate);
+    		yangJson = new JSONObject(yangJsonStr);
     		
+    		
+    		if (validate) {
+        		prettyPrintJson(yangJsonStr);
+        		
+    			JsonToYangJsonRequest request = new JsonToYangJsonRequest();
+    			request.setTopic(md.getTopic());
+    			request.setJsonStr(yangJsonStr);
+    			
+    			String result = transService.validateYang(request);
+    			logger.info("YangTransformer.convertToYangJson: Validationg result: " + result);
+    		}
+
     	} while(false);
     	logger.info("YangTransformer.jsonToYangJson: Exited");
     	
